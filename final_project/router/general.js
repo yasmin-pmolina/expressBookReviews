@@ -1,9 +1,12 @@
 const express = require('express');
+const axios = require("axios");
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
 let users = require("./auth_users.js").users;
 const getDetailbook = require("./auth_users.js").getDetailbook;
 const public_users = express.Router();
+const config = require('../config.js'); 
+
 
 const doesExist = (username)=>{
     let userswithsamename = users.filter((user)=>{
@@ -31,8 +34,8 @@ public_users.post("/register", (req,res) => {
     return res.status(404).json({message: "Unable to register user."});
 });
 
-// Get the book list available in the shop
-public_users.get('/', function (req, res) {
+// endpoint '/' books, which allows us to consume by axios in the method get '/' &  '/isbn/:isbn' 
+public_users.get('/books', function (req, res) {
   //Write your code here
     const myPromise = new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -42,26 +45,32 @@ public_users.get('/', function (req, res) {
       
     myPromise.then((result) => {res.status(200).json({books:result})})
     .catch((err) => res.status(500).json('Error interno del servidor'));  
-  
 });
+
+public_users.get('/', function (req, res) {
+
+  const url =  `${config.apiUrl}:${config.port}/books/`;
+  axios.get(url)  
+    .then((response) => {
+      res.status(200).json({ books: response.data });
+    })
+    .catch((error) => {
+      res.status(500).json(`Error interno del servidor ${error.message} `);
+    });
+});
+
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn', async function (req, res) {
   //Write your code here
-  const myPromise = new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(getDetailbook(req.params.isbn));
-    }, 300);
-  });
-
-  myPromise.then((result) => {res.status(200).json({result})})
-  .catch((err) => res.status(500).json('Error interno del servidor')); 
-
-    //const bookDetails = await getDetailbook(req.params.isbn)
-    //if (bookDetails) {
-    //   return res.status(200).json(bookDetails);
-    // } 
-    // return res.status(404).json({ error: 'book not found ' });
+  const url =  `${config.apiUrl}:${config.port}/books/`;
+  axios.get(url)  
+    .then((response) => {
+      res.status(200).json({ books: response.data.books[req.params.isbn] });
+    })
+    .catch((error) => {
+      res.status(500).json(`Error interno del servidor ${error.message} `);
+    });
  });
   
  async function findBooksByAuthor(author, books) {
@@ -78,27 +87,29 @@ public_users.get('/isbn/:isbn', async function (req, res) {
     return booksFound;
 }
   
+public_users.get('/books/author/:author', async function (req, res) {
+  //Write your code here
+    const myPromise = new Promise((resolve, reject) => {
+        setTimeout(() => {
+          resolve(findBooksByAuthor(req.params.author, books));
+        }, 300);
+      });
+      
+    myPromise.then((result) => {res.status(200).json({result})})
+    .catch((err) => res.status(500).json('Error interno del servidor'));  
+});
+
 // Get book details based on author
 public_users.get('/author/:author', async function (req, res) {
-  //Write your code here
-  const myPromise = new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(findBooksByAuthor(req.params.author, books));
-    }, 300);
-  });
-    
-  myPromise.then(booksFound => {
-
-        if(booksFound.length > 0)
-        return res.status(200).json(booksFound);  
-        else       
-         return res.status(404).json("author not found");  
-
-     })
-     .catch(error => {
-        return res.status(400).json(error.message);   
+ 
+  const url =  `${config.apiUrl}:${config.port}/books/author/${req.params.author}`;
+  axios.get(url)  
+    .then((response) => {
+      res.status(200).json(response.data);
+    })
+    .catch((error) => {
+      res.status(500).json(`Error interno del servidor ${error.message} `);
     });
-
 });
 
 async function findBooksByTitle(title, books) {
@@ -114,25 +125,35 @@ async function findBooksByTitle(title, books) {
   return booksFound;
 }
 
+
+public_users.get('/books/title/:title', async function (req, res) {
+  const myPromise = new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(findBooksByTitle(req.params.title, books));
+    }, 300);
+  });
+
+  myPromise.then(booksFound => {
+    if(booksFound.length > 0)
+      return res.status(200).json(booksFound);  
+    else       
+      return res.status(404).json("title not found");  
+  })
+  .catch(error => {
+    return res.status(400).json(error.message);   
+  });
+});
+
 // Get all books based on title
 public_users.get('/title/:title', async function (req, res) {
     
-    const myPromise = new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve(findBooksByTitle(req.params.title, books));
-        }, 300);
-      });
-
-     myPromise.then(booksFound => {
-
-        if(booksFound.length > 0)
-        return res.status(200).json(booksFound);  
-        else       
-         return res.status(404).json("title not found");  
-
-     })
-     .catch(error => {
-        return res.status(400).json(error.message);   
+  const url =  `${config.apiUrl}:${config.port}/books/title/${req.params.title}`;
+  axios.get(url)  
+    .then((response) => {
+      res.status(200).json(response.data);
+    })
+    .catch((error) => {
+      res.status(500).json(`Error interno del servidor ${error.message} `);
     });
 });
 
