@@ -66,7 +66,7 @@ public_users.get('/isbn/:isbn', async function (req, res) {
   const url =  `${config.apiUrl}:${config.port}/books/`;
   axios.get(url)  
     .then((response) => {
-      res.status(200).json({ books: response.data.books[req.params.isbn] });
+      res.status(200).json(response.data.books[req.params.isbn]);
     })
     .catch((error) => {
       res.status(500).json(`Error interno del servidor ${error.message} `);
@@ -87,7 +87,7 @@ public_users.get('/isbn/:isbn', async function (req, res) {
     return booksFound;
 }
   
-public_users.get('/books/author/:author', async function (req, res) {
+get('/books/author/:author', async function (req, res) {
   //Write your code here
     const myPromise = new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -95,7 +95,7 @@ public_users.get('/books/author/:author', async function (req, res) {
         }, 300);
       });
       
-    myPromise.then((result) => {res.status(200).json({result})})
+    myPromise.then((result) => {res.status(200).json(result)})
     .catch((err) => res.status(500).json('Error interno del servidor'));  
 });
 
